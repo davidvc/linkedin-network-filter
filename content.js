@@ -25,8 +25,74 @@
   }
 
   function findPosts() {
+    const loader = findLoader();
     const all = document.querySelectorAll(POST_SELECTORS);
-    return [...all].filter((el) => !el.parentElement?.closest(POST_SELECTORS));
+    return [...all].filter(
+      (el) => el !== loader && !el.parentElement?.closest(POST_SELECTORS)
+    );
+  }
+
+  // --- Keeping infinite scroll going ---------------------------------------
+  // The feed ends with an empty "load more" element; LinkedIn fetches the next
+  // batch when it *enters* the viewport. With most posts collapsed, a new batch
+  // barely grows the page, so that element never leaves the screen and never
+  // re-enters. When that happens we hide and re-show it for a frame, which
+  // LinkedIn sees as leaving and re-entering.
+
+  const NUDGE_SETTLE_MS = 800; // let a new batch finish rendering first
+  const MIN_NUDGE_GAP_MS = 1000;
+  const MAX_NUDGES_WITHOUT_SCROLL = 10; // don't load forever if you walk away
+
+  let lastFeedSize = -1;
+  let feedChangedAt = 0;
+  let nudgedAtSize = -1;
+  let nudgesSinceScroll = 0;
+  let lastNudgeAt = 0;
+
+  function findLoader() {
+    const last = document.querySelector("[data-testid='mainFeed']")?.lastElementChild;
+    if (!last || last.hasAttribute("data-lazy-mount-id") || last.textContent.trim()) return null;
+    return last;
+  }
+
+  // LinkedIn starts loading before the element is actually on screen, using a
+  // margin we can't see. Be generous: a nudge outside that margin is a no-op.
+  function nearViewport(el) {
+    const r = el.getBoundingClientRect();
+    return r.top < innerHeight * 3 && r.bottom > -innerHeight;
+  }
+
+  function maybeNudgeLoader() {
+    if (!settings.enabled) return;
+    const loader = findLoader();
+    if (!loader) return;
+
+    const size = loader.parentElement.childElementCount;
+    if (size !== lastFeedSize) {
+      lastFeedSize = size;
+      feedChangedAt = Date.now();
+    }
+    // Nudge once per batch; a new batch (or your scrolling) re-arms it.
+    if (size === nudgedAtSize) return;
+    if (nudgesSinceScroll >= MAX_NUDGES_WITHOUT_SCROLL) return;
+    if (!nearViewport(loader)) return;
+
+    const wait = Math.max(
+      feedChangedAt + NUDGE_SETTLE_MS - Date.now(),
+      lastNudgeAt + MIN_NUDGE_GAP_MS - Date.now()
+    );
+    if (wait > 0) return schedule(wait);
+
+    lastNudgeAt = Date.now();
+    nudgedAtSize = size;
+    nudgesSinceScroll++;
+    const prev = loader.style.display;
+    loader.style.display = "none";
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        loader.style.display = prev;
+      })
+    );
   }
 
   // Identifies what a container currently holds. The feed loads posts lazily
@@ -117,6 +183,7 @@
       classify(post);
       apply(post);
     }
+    maybeNudgeLoader();
   }
 
   function schedule(delay = 150) {
@@ -131,6 +198,16 @@
       childList: true,
       subtree: true,
     });
+    addEventListener(
+      "scroll",
+      () => {
+        // You scrolled, so you're still reading: allow another nudge.
+        nudgesSinceScroll = 0;
+        nudgedAtSize = -1;
+        schedule();
+      },
+      { passive: true }
+    );
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {
