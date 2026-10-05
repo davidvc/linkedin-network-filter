@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "LinkedIn Network Filter",
+  "version": "1.0.0",
+  "description": "Shows only posts from your connections (and optionally what they liked) in your LinkedIn feed.",
+  "permissions": ["storage"],
+  "action": {
+    "default_title": "LinkedIn Network Filter",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.linkedin.com/*"],
+      "js": ["classify.js", "content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

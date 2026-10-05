@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; width: 260px; margin: 0; padding: 14px; color: #1f1f1f; }
+    h1 { font-size: 14px; margin: 0 0 6px; display: flex; justify-content: space-between; align-items: center; }
+    label { display: flex; gap: 6px; align-items: center; cursor: pointer; font-weight: normal; }
+    .hint { color: #666; font-size: 12px; margin: 0 0 10px; }
+    #stats { border-top: 1px solid #ddd; padding-top: 8px; color: #444; }
+    #stats ul { margin: 4px 0 0; padding-left: 18px; }
+  </style>
+</head>
+<body>
+  <h1>
+    LinkedIn Network Filter
+    <label title="Turn filtering on or off"><input type="checkbox" id="enabled"> On</label>
+  </h1>
+  <p class="hint">Shows posts your connections wrote, liked, commented on or reposted.</p>
+  <div id="stats">Open your LinkedIn feed to see stats.</div>
+  <script src="popup.js"></script>
+</body>
+</html>

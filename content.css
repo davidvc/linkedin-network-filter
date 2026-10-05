@@ -1,0 +1,31 @@
+/* Hide the post's own content but keep our bar (which lives inside it). */
+.lnf-hidden > :not(.lnf-bar) {
+  display: none !important;
+}
+
+.lnf-bar {
+  margin: 0 0 8px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px dashed rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.03);
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lnf-bar:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.85);
+}
+
+html.theme--dark .lnf-bar,
+[data-theme="dark"] .lnf-bar {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.6);
+}
